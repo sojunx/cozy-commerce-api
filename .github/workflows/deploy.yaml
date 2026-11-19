@@ -72,6 +72,6 @@ jobs:
               sleep 2
             done
             echo "Health check failed"
-            docker compose -f /opt/api/docker-compose.yml logs --tail=50 api
+            docker compose -f /opt/api/docker-compose.yaml logs --tail=50 api
             exit 1
           '
