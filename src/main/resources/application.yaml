@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: cozy-commerce
+
+  jpa.hibernate.ddl-auto: validate
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:5432/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+application.jwt:
+  secret: ${JWT_SECRET_KEY}
+  expiration: ${JWT_EXPIRATION}
