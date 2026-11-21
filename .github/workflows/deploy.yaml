@@ -65,15 +65,35 @@ jobs:
           tags: tag:ci
 
       - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          HOST_NAME: ${{ secrets.HOSTNAME }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 700 ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.HOSTNAME }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H $HOST_NAME >> ~/.ssh/known_hosts
 
-      - name: Deploy
+      - name: Login GHCR
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOST_NAME: ${{ secrets.HOSTNAME }}
         run: |
-          ssh deploy@${{ secrets.HOSTNAME }} << 'EOF'
-            whoami
-            hostname
+          echo "$GHCR_TOKEN" | ssh deploy@"$HOST_NAME" \
+            "docker login ghcr.io -u '$GHCR_USER' --password-stdin"
+      - name: Deploy
+        env:
+          HOST_NAME: ${{ secrets.HOSTNAME }}
+          DEPLOY_DIR: /opt/cozy-commerce-api
+        run: |
+          IMAGE_TAG="sha-${GITHUB_SHA::7}"
+          ssh deploy@"$HOST_NAME" "IMAGE_TAG=$IMAGE_TAG DEPLOY_DIR=$DEPLOY_DIR bash -s" << 'EOF'
+            set -euo pipefail
+            cd "$DEPLOY_DIR"
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker image prune -f
+            docker compose ps
           EOF
