@@ -15,8 +15,6 @@ RUN ./gradlew bootJar --no-daemon
 # Stage 2: Runtime
 FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
-RUN useradd --system --uid 10001 app
 COPY --from=build --chown=app:app /app/build/libs/*.jar app.jar
-USER app
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
