@@ -1,3 +1,4 @@
+# Stage 1: Install dependencies & build
 FROM eclipse-temurin:25-jdk-alpine AS build
 WORKDIR /app
 
@@ -11,10 +12,11 @@ RUN ./gradlew dependencies --no-daemon
 COPY src src
 RUN ./gradlew bootJar --no-daemon
 
+# Stage 2: Runtime
 FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
-RUN addgroup -S app && adduser -S app -G app
-COPY --from=build /app/build/libs/*.jar app.jar
+RUN useradd --system --uid 10001 app
+COPY --from=build --chown=app:app /app/build/libs/*.jar app.jar
 USER app
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
